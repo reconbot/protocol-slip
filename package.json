@@ -1,0 +1,12 @@
+{
+  "name": "protocol-slip",
+  "version": "1.0.0",
+  "description": "iterators to encode and decode the SLIP protocol",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
