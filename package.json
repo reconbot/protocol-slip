@@ -1,12 +1,50 @@
 {
   "name": "protocol-slip",
   "version": "1.0.0",
-  "description": "iterators to encode and decode the SLIP protocol",
-  "main": "index.js",
+  "description": "A collection of utilities for async iterables. Designed to replace your streams.",
+  "main": "dist",
+  "types": "dist/index.d.ts",
+  "repository": "git@github.com:reconbot/protocol-slip.git",
+  "homepage": "https://github.com/reconbot/protocol-slip",
+  "runkitExampleFilename": "example.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "npm run unit-test && npm run lint",
+    "unit-test": "mocha --opts lib/mocha.opts",
+    "lint": "tsc && tslint lib/*.ts",
+    "format": "tslint lib/*.ts --fix",
+    "build": "tsc -p tsconfig-build.json",
+    "prepare": "npm run build"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC"
+  "keywords": [
+    "async",
+    "async iterables",
+    "iterators",
+    "async iterators",
+    "stream",
+    "slip",
+    "protocol"
+  ],
+  "author": "reconbot",
+  "license": "MIT",
+  "dependencies": {
+    "bl": "^2.1.2"
+  },
+  "devDependencies": {
+    "@types/bl": "^2.1.0",
+    "@types/mocha": "^5.2.5",
+    "@types/node": "^10.12.4",
+    "benchmark": "^2.1.4",
+    "bluestream": "^10.3.3",
+    "mocha": "^5.2.0",
+    "prettier": "^1.15.2",
+    "streaming-iterables": "^3.4.0",
+    "ts-node": "^7.0.1",
+    "tslint": "^5.11.0",
+    "tslint-config-prettier": "^1.16.0",
+    "tslint-plugin-prettier": "^2.0.1",
+    "typescript": "^3.1.6"
+  },
+  "engines": {
+    "node": ">=8"
+  }
 }
