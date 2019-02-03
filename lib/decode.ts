@@ -1,47 +1,45 @@
 import BufferList from 'bl'
-import { END_BUFFER, END_ESC_SEQ, ESC_ESC_SEQ, ESC_BUFFER } from './constants'
+import { END, ESC_END, ESC_ESC, ESC } from './constants'
 
 export const decodePacket = (packet: BufferList): Buffer => {
-  const decodedPacket = new BufferList()
-  let endPosition = packet.indexOf(END_ESC_SEQ)
-  let escPosition = packet.indexOf(ESC_ESC_SEQ)
+  const message = new BufferList()
   let remainingPacket = packet
-  if (escPosition > -1 || endPosition > -1) {
-    const nextSlice = Math.min(endPosition === -1 ? Infinity : endPosition, escPosition === -1 ? Infinity : escPosition)
-    const part = nextSlice === 0 ? new BufferList() : remainingPacket.shallowSlice(0, nextSlice)
-    const escapedByte = nextSlice === endPosition ? END_BUFFER : ESC_BUFFER
-    decodedPacket.append(part)
-    decodedPacket.append(escapedByte)
-    remainingPacket = remainingPacket.shallowSlice(nextSlice + 2)
-
-    // find the next thing to escape
-    if (nextSlice === endPosition) {
-      endPosition = remainingPacket.indexOf(END_BUFFER)
-      escPosition = escPosition - (part.length + 1)
-    } else {
-      endPosition = endPosition - (part.length + 1)
-      escPosition = remainingPacket.indexOf(ESC_BUFFER)
+  let escPosition = packet.indexOf(ESC)
+  while (escPosition > -1) {
+    if (escPosition > 0) {
+      const part = remainingPacket.shallowSlice(0, escPosition)
+      message.append(part)
     }
+    const nextByte = remainingPacket.get(escPosition + 1)
+    if (nextByte === ESC_END[0]) {
+      message.append(END)
+    } else if (nextByte === ESC_ESC[0]) {
+      message.append(ESC)
+    } else {
+      message.append(remainingPacket.slice(escPosition + 1, escPosition + 2))
+    }
+    remainingPacket = remainingPacket.shallowSlice(escPosition + 2)
+    escPosition = remainingPacket.indexOf(ESC)
   }
-  decodedPacket.append(remainingPacket)
-  return decodedPacket.slice()
+  message.append(remainingPacket)
+  return message.slice()
 }
 
 function* _syncDecode(iterable: Iterable<Buffer>) {
   let buffer = new BufferList()
   for (const data of iterable) {
     // search new data for the END byte
-    const dataEndPosition = data.indexOf(END_BUFFER)
+    const dataEndPosition = data.indexOf(END)
     let endPosition = dataEndPosition === -1 ? -1 : buffer.length + dataEndPosition
     buffer.append(data)
     // emit any packets we have
     while (endPosition > -1) {
-      const packet = endPosition === 0 ? new BufferList() : buffer.shallowSlice(0, endPosition)
-      if (packet.length > 0) {
-        yield decodePacket(packet)
+      if (endPosition > 0) {
+        const packetData = buffer.shallowSlice(0, endPosition)
+        yield decodePacket(packetData)
       }
       buffer = buffer.shallowSlice(endPosition + 1)
-      endPosition = buffer.indexOf(END_BUFFER)
+      endPosition = buffer.indexOf(END)
     }
   }
   if (buffer.length > 0) {
@@ -53,17 +51,17 @@ async function* _asyncDecode(iterable: AsyncIterable<Buffer>) {
   let buffer = new BufferList()
   for await (const data of iterable) {
     // search new data for the END byte
-    const dataEndPosition = data.indexOf(END_BUFFER)
+    const dataEndPosition = data.indexOf(END)
     let endPosition = dataEndPosition === -1 ? -1 : buffer.length + dataEndPosition
     buffer.append(data)
     // emit any packets we have
     while (endPosition > -1) {
-      const packet = endPosition === 0 ? new BufferList() : buffer.shallowSlice(0, endPosition)
-      if (packet.length > 0) {
+      if (endPosition > 0) {
+        const packet = buffer.shallowSlice(0, endPosition)
         yield decodePacket(packet)
       }
       buffer = buffer.shallowSlice(endPosition + 1)
-      endPosition = buffer.indexOf(END_BUFFER)
+      endPosition = buffer.indexOf(END)
     }
   }
   if (buffer.length > 0) {

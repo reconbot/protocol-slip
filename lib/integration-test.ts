@@ -1,23 +1,23 @@
 import { collect } from 'streaming-iterables'
 import { encode, decode } from './'
 import { deepEqual } from 'assert'
-import { END_BUFFER, ESC_BUFFER, ESC_END_BUFFER } from './constants'
+import { END, ESC, ESC_END } from './constants'
 
 const MESSAGE = Buffer.concat([
   Buffer.from('This is my message,'),
-  END_BUFFER,
+  END,
   Buffer.from('there are'),
-  ESC_BUFFER,
+  ESC,
   Buffer.from(' many like it but this one is mine.'),
 ])
 const PACKETS = Buffer.concat([
   Buffer.from('This is my'),
-  ESC_BUFFER,
-  ESC_END_BUFFER,
+  ESC,
+  ESC_END,
   Buffer.from(' packet'),
-  END_BUFFER,
+  END,
   Buffer.from('This is another packet'),
-  END_BUFFER,
+  END,
 ])
 
 // Adapted from https://github.com/OhMeadhbh/node-slip/blob/master/test_slip.js
@@ -31,8 +31,6 @@ const nodeSlipExamples: fixtureData[] = [
   ['one packet, escape esc', ['AADBDD55C0'], ['AADB55']],
   ['two packets, escape end', ['001122DB', 'DC3344C0'], ['001122C03344']],
   ['two packets, escape esc', ['FFEEDB', 'DDDDCCBBAAC0'], ['FFEEDBDDCCBBAA']],
-  ['one packet, esc error', ['00DBAA11C0'], ['00AA11']],
-  ['one packet, two esc errors', ['00DBAADBBB11C0'], ['00AABB11']],
   [
     'one big long packet',
     ['00112233445566778899AABBCCDDEEFF001122334455667788C0'],
@@ -51,7 +49,7 @@ const nodeSlipExamples: fixtureData[] = [
 ]
 
 describe('integration', () => {
-  describe.only('node-slip tests', () => {
+  describe('node-slip tests', () => {
     nodeSlipExamples.forEach(([description, packetsStr, messagesStr]) => {
       const packets = packetsStr.map(str => Buffer.from(str, 'HEX'))
       const messages = messagesStr.map(str => Buffer.from(str, 'HEX'))

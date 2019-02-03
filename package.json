@@ -27,7 +27,7 @@
   "author": "reconbot",
   "license": "MIT",
   "dependencies": {
-    "bl": "^2.1.2"
+    "bl": "^2.2.0"
   },
   "devDependencies": {
     "@types/bl": "^2.1.0",
