@@ -1,6 +1,6 @@
 # protocol-slip 🍌
 
-[![Build Status](https://travis-ci.org/reconbot/streaming-iterables.svg?branch=master)](https://travis-ci.org/reconbot/streaming-iterables)
+[![CircleCI](https://circleci.com/gh/reconbot/protocol-slip/tree/master.svg?style=svg&circle-token=d75c1842b237fef8232fae158891b990f519d69e)](https://circleci.com/gh/reconbot/protocol-slip/tree/master)
 [![Try protocol-slip on RunKit](https://badge.runkitcdn.com/protocol-slip.svg)](https://npm.runkit.com/protocol-slip)
 [![install size](https://packagephobia.now.sh/badge?p=protocol-slip)](https://packagephobia.now.sh/result?p=protocol-slip)
 
