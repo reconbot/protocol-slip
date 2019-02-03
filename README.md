@@ -23,6 +23,15 @@ for await (const message of decode(serial.readItr())) {
 
 Both `encode` and `decode` return iterators (or async iterators depending on the data source) that will encode messages into packets, or decode binary data (full or partial packets) into messages. The [spec](https://tools.ietf.org/html/rfc1055), [earlier references](https://tools.ietf.org/html/rfc914) and the [wikipedia page](https://en.wikipedia.org/wiki/Serial_Line_Internet_Protocol) are light on details for edge cases, so I've referenced a few other implementations as well.
 
+At it's root (from wikipedia);
+
+> appending a special "END" byte to it, which distinguishes datagram boundaries in the byte stream,
+> if the END byte occurs in the data to be sent, the two byte sequence ESC, ESC_END is sent instead,
+> if the ESC byte occurs in the data, the two byte sequence ESC, ESC_ESC is sent.
+
+We don't do this part, but parse it without issue
+> variants of the protocol may begin, as well as end, packets with END.
+
 RFC 1055 has sample C code that suggests ignoring unknown escape sequences by removing the escape character and allowing the second byte to remain. So that's what I do too. This deviates from other JS implementations like [`node-slip`](https://github.com/OhMeadhbh/node-slip) but matches [`slip`](https://github.com/colinbdclark/slip.js)'s behavior.
 
 I did ignore some parts of the RFCs. For example;

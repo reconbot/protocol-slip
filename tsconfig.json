@@ -2,7 +2,7 @@
   "compilerOptions": {
     "noEmit": true,
     "allowJs": false,
-    "target": "es2017",
+    "target": "esnext",
     "moduleResolution": "node",
     "esModuleInterop": true,
     "module": "commonjs",
