@@ -1,6 +1,6 @@
 {
   "name": "protocol-slip",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "An iterator based [RFC 1055](https://tools.ietf.org/html/rfc1055) compliant `SLIP` (Serial Line Internet Protocol) encoder/decoder.",
   "main": "dist",
   "types": "dist/index.d.ts",
