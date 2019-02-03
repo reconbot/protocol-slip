@@ -56,10 +56,36 @@ Some things `SLIP` does not do (stolen from (RFC 1055)[https://tools.ietf.org/ht
 npm install protocol-slip
 ```
 
+This package targets ES2017 and requires node 8 or higher. It will polyfill `Symbol.asyncIterator` if necessary to allow async iterables to be used.
+
 ## API
 
-- [`encode()`](#encode)
 - [`decode()`](#decode)
+- [`decodePacket()`](#decodepacket)
+- [`encode()`](#encode)
+- [`encodeMessage()`](#encodemessage)
+
+### decode
+```ts
+function decode<Buffer>(iterable: AsyncIterable<Buffer>): AsyncIterableIterator<Buffer>
+function decode<Buffer>(iterable: Iterable<Buffer>): IterableIterator<Buffer>
+```
+
+Decode an iterable of packet data into messages. Data is read from `iterable` and yielded as complete messages. If an unknown escape sequence is detected the `ESC` byte is removed but the next byte is passed through without modification per RFC 1055 recommendations. Empty messages are ignored, so it's safe receive data from SLIP implementations that include a leading `END` byte.
+
+```ts
+import { decode } from 'protocol-slip'
+const PACKETS = [Buffer.from('54686973206973206D7920', 'HEX'), Buffer.from('6D657373616765C0', 'HEX')]
+const messages = Array.from(decode(PACKETS))
+console.log(messages[0].toString()) // 'This is my message'
+```
+
+### decodePacket
+```ts
+function decodePacket(packet: BufferList): Buffer
+```
+
+Take a [`BufferList`](https://www.npmjs.com/package/bl) of a complete packet and return a `Buffer` of a message. A `BufferList` is used as it allows appending buffers received from a stream or other source with very little overhead. This function is used internally and could be helpful if you do not have an iterable or async iterable interface to read data from.
 
 ### encode
 ```ts
@@ -67,7 +93,7 @@ function encode<Buffer>(iterable: AsyncIterable<Buffer>): AsyncIterableIterator<
 function encode<Buffer>(iterable: Iterable<Buffer>): IterableIterator<Buffer>
 ```
 
-Encode an iterable of messages into SLIP compliant packets.
+Encode an iterable of messages into SLIP compliant packets. This function will escape and encapsulate messages into packets and emit them 1 for 1 as they are read from `iterable`. The `END` byte is only applied to the end of each message.
 
 ```ts
 import { encode } from 'protocol-slip'
@@ -76,21 +102,12 @@ const packets = Array.from(encode(MESSAGES))
 console.log(packets) // [Buffer <54, 68, 69, 73, 20, 69, 73, 20, 6D, 79, 20, 6D, 65, 73, 73, 61, 67, 65, C0>]
 ```
 
-### decode
+### encodeMessage
 ```ts
-function decode<Buffer>(iterable: AsyncIterable<Buffer>): AsyncIterableIterator<Buffer>
-function decode<Buffer>(iterable: Iterable<Buffer>): IterableIterator<Buffer>
+function encodeMessage(data: Buffer): Buffer
 ```
 
-Decode an iterable of packet data into messages.
-
-```ts
-import { decode } from 'protocol-slip'
-const PACKETS = [Buffer.from('54686973206973206D7920', 'HEX'), Buffer.from('6D657373616765C0', 'HEX')]
-const messages = Array.from(decode(PACKETS))
-console.log(messages[0].toString()) // 'This is my message'
-
-```
+Encode a message into a slip packet. This function will escape and encapsulate a `Buffer` into a slip format. This function is used internally and could be helpful if you do not have an iterable or async iterable interface to read data from.
 
 ## Contributors wanted!
 

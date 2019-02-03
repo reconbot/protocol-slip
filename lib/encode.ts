@@ -1,6 +1,6 @@
 import { END, ESC, END_ESC_SEQ, ESC_ESC_SEQ } from './constants'
 
-export const encodePacket = (data: Buffer) => {
+export const encodeMessage = (data: Buffer) => {
   let remainingPacket = data
   let endPosition = remainingPacket.indexOf(END)
   let escPosition = remainingPacket.indexOf(ESC)
@@ -27,13 +27,13 @@ export const encodePacket = (data: Buffer) => {
 
 async function* _asyncEncode(iterable: AsyncIterable<Buffer>): AsyncIterableIterator<Buffer> {
   for await (const data of iterable) {
-    yield encodePacket(data)
+    yield encodeMessage(data)
   }
 }
 
 function* _syncEncode(iterable: Iterable<Buffer>): IterableIterator<Buffer> {
   for (const data of iterable) {
-    yield encodePacket(data)
+    yield encodeMessage(data)
   }
 }
 
