@@ -63,41 +63,33 @@ npm install protocol-slip
 
 ### encode
 ```ts
-function encode<T>(size: number, iterable: AsyncIterable<T>): AsyncIterableIterator<T[]>
-function encode<T>(size: number, iterable: Iterable<T>): IterableIterator<T[]>
+function encode<Buffer>(iterable: AsyncIterable<Buffer>): AsyncIterableIterator<Buffer>
+function encode<Buffer>(iterable: Iterable<Buffer>): IterableIterator<Buffer>
 ```
 
-Batch objects from `iterable` into arrays of `size` length. The final array may be shorter than size if there is not enough items. Returns a sync iterator if the `iterable` is sync, otherwise an async iterator. Errors from the source `iterable` are immediately raised.
-
-`size` can be betweeen 1 and `Infinity`.
+Encode an iterable of messages into SLIP compliant packets.
 
 ```ts
-import { batch } from 'streaming-iterables'
-import { getPokemon } from 'iterable-pokedex'
-
-// batch 10 pokemon while we process them
-for await (const pokemons of batch(10, getPokemon())) {
-  console.log(pokemons) // 10 pokemon at a time!
-}
+import { encode } from 'protocol-slip'
+const MESSAGES = [Buffer.from('This is my message')]
+const packets = Array.from(encode(MESSAGES))
+console.log(packets) // [Buffer <54, 68, 69, 73, 20, 69, 73, 20, 6D, 79, 20, 6D, 65, 73, 73, 61, 67, 65, C0>]
 ```
 
 ### decode
 ```ts
-function decode<T>(size: number, iterable: AsyncIterable<T>): AsyncIterableIterator<T>
-function decode<T>(size: number, iterable: Iterable<T>): IterableIterator<T>
+function decode<Buffer>(iterable: AsyncIterable<Buffer>): AsyncIterableIterator<Buffer>
+function decode<Buffer>(iterable: Iterable<Buffer>): IterableIterator<Buffer>
 ```
-Buffer keeps a number of objects in reserve available for immediate reading. This is helpful with async iterators as it will prefetch results so you don't have to wait for them to load. For sync iterables it will precompute up to `size` values and keep them in reserve. The internal buffer will start to be filled once `.next()` is called for the first time and will continue to fill until the source `iterable` is exhausted or the buffer is full. Errors from the source `iterable` will be raised after all buffered values are yielded.
 
-`size` can be betweeen 1 and `Infinity`.
+Decode an iterable of packet data into messages.
 
 ```ts
-import { buffer } from 'streaming-iterables'
-import { getPokemon, trainMonster } from 'iterable-pokedex'
+import { decode } from 'protocol-slip'
+const PACKETS = [Buffer.from('54686973206973206D7920', 'HEX'), Buffer.from('6D657373616765C0', 'HEX')]
+const messages = Array.from(decode(PACKETS))
+console.log(messages[0].toString()) // 'This is my message'
 
-// load 10 monsters in the background while we process them one by one
-for await (const monster of buffer(10, getPokemon())) {
-  await trainMonster(monster) // got to do some pokéwork
-}
 ```
 
 ## Contributors wanted!
