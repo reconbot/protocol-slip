@@ -31,8 +31,8 @@ const nodeSlipExamples: fixtureData[] = [
   ['one packet, escape esc', ['AADBDD55C0'], ['AADB55']],
   ['two packets, escape end', ['001122DB', 'DC3344C0'], ['001122C03344']],
   ['two packets, escape esc', ['FFEEDB', 'DDDDCCBBAAC0'], ['FFEEDBDDCCBBAA']],
-  ['one packet, esc error', ['00DBAA11C0'], ['0011']],
-  ['one packet, two esc errors', ['00DBAADBBB11C0'], ['0011']],
+  ['one packet, esc error', ['00DBAA11C0'], ['00AA11']],
+  ['one packet, two esc errors', ['00DBAADBBB11C0'], ['00AABB11']],
   [
     'one big long packet',
     ['00112233445566778899AABBCCDDEEFF001122334455667788C0'],

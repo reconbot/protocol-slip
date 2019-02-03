@@ -27,9 +27,9 @@ export const decodePacket = (packet: BufferList): Buffer => {
   return decodedPacket.slice()
 }
 
-async function* _asyncDecode(iterable: AsyncIterable<Buffer>) {
+function* _syncDecode(iterable: Iterable<Buffer>) {
   let buffer = new BufferList()
-  for await (const data of iterable) {
+  for (const data of iterable) {
     // search new data for the END byte
     const dataEndPosition = data.indexOf(END_BUFFER)
     let endPosition = dataEndPosition === -1 ? -1 : buffer.length + dataEndPosition
@@ -49,9 +49,9 @@ async function* _asyncDecode(iterable: AsyncIterable<Buffer>) {
   }
 }
 
-function* _syncDecode(iterable: Iterable<Buffer>) {
+async function* _asyncDecode(iterable: AsyncIterable<Buffer>) {
   let buffer = new BufferList()
-  for (const data of iterable) {
+  for await (const data of iterable) {
     // search new data for the END byte
     const dataEndPosition = data.indexOf(END_BUFFER)
     let endPosition = dataEndPosition === -1 ? -1 : buffer.length + dataEndPosition

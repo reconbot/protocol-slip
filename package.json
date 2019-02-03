@@ -1,7 +1,7 @@
 {
   "name": "protocol-slip",
   "version": "1.0.0",
-  "description": "A collection of utilities for async iterables. Designed to replace your streams.",
+  "description": "An iterator based [RFC 1055](https://tools.ietf.org/html/rfc1055) compliant `SLIP` (Serial Line Internet Protocol) encoder/decoder.",
   "main": "dist",
   "types": "dist/index.d.ts",
   "repository": "git@github.com:reconbot/protocol-slip.git",
@@ -16,13 +16,13 @@
     "prepare": "npm run build"
   },
   "keywords": [
-    "async",
-    "async iterables",
+    "SLIP",
+    "serial",
     "iterators",
     "async iterators",
     "stream",
-    "slip",
-    "protocol"
+    "protocol",
+    "parser"
   ],
   "author": "reconbot",
   "license": "MIT",

@@ -4,16 +4,48 @@
 [![Try protocol-slip on RunKit](https://badge.runkitcdn.com/protocol-slip.svg)](https://npm.runkit.com/protocol-slip)
 [![install size](https://packagephobia.now.sh/badge?p=protocol-slip)](https://packagephobia.now.sh/result?p=protocol-slip)
 
+An iterator based [RFC 1055](https://tools.ietf.org/html/rfc1055) compliant `SLIP` (Serial Line Internet Protocol) encoder/decoder.
 
-Description
+## Example
+```js
+import { encode, decode } from 'protocol-slip'
+
+const serial = // a serialport interface of some sort
+const messages = [/* An array of buffers */]
+for (const data of encode(messages)) {
+  await serial.write(data)
+}
+
+for await (const message of decode(serial.readItr())) {
+  console.log(message) // a buffer with your message in it
+}
+```
+
+Both `encode` and `decode` return iterators (or async iterators depending on the data source) that will encode messages into packets, or decode binary data (full or partial packets) into messages. The [spec](https://tools.ietf.org/html/rfc1055), [earlier references](https://tools.ietf.org/html/rfc914) and the [wikipedia page](https://en.wikipedia.org/wiki/Serial_Line_Internet_Protocol) are light on details for edge cases, so I've referenced a few other implementations as well.
+
+RFC 1055 has sample C code that suggests ignoring unknown escape sequences by removing the escape character and allowing the second byte to remain. So that's what I do too. This deviates from other JS implementations like [`node-slip`](https://github.com/OhMeadhbh/node-slip) but matches [`slip`](https://github.com/colinbdclark/slip.js)'s behavior.
+
+I did ignore some parts of the RFCs. For example;
+
+> Therefore any new SLIP implementations should be prepared to accept 1006 byte datagrams and should not send more than 1006 bytes in a datagram.
+
+This advice is outdated. There is no maximum packet size with these functions.
+
+You probably already know why you want to use `SLIP` but I'll cover some details. `SLIP` is a;
+- Lightweight message encoding with low overhead
+- [Self synchronizing](https://en.wikipedia.org/wiki/Self-synchronizing_code) protocol capable of recovering after data loss or line noise
+
+Some things `SLIP` does not do (stolen from (RFC 1055)[https://tools.ietf.org/html/rfc1055]);
+- Error correction, Errors are usually not noticed. As a result of line noise or data loss, messages may be merged, have garbage data, or be split into pieces. Subsequent messages however will be not be affected.
+- Addressing, you put bytes on a wire and you read bytes. If you got them they're for you.
+- Type identification, You have to bring this yourself, it's just segments of data.
+- Error detection/correction, There is no attempt made in this area.
+- Compression, you also have to bring this if you want it.
 
 ## Install
 ```bash
 npm install protocol-slip
 ```
-
-## Example
-
 
 ## API
 
@@ -22,8 +54,8 @@ npm install protocol-slip
 
 ### encode
 ```ts
-function batch<T>(size: number, iterable: AsyncIterable<T>): AsyncIterableIterator<T[]>
-function batch<T>(size: number, iterable: Iterable<T>): IterableIterator<T[]>
+function encode<T>(size: number, iterable: AsyncIterable<T>): AsyncIterableIterator<T[]>
+function encode<T>(size: number, iterable: Iterable<T>): IterableIterator<T[]>
 ```
 
 Batch objects from `iterable` into arrays of `size` length. The final array may be shorter than size if there is not enough items. Returns a sync iterator if the `iterable` is sync, otherwise an async iterator. Errors from the source `iterable` are immediately raised.
@@ -42,8 +74,8 @@ for await (const pokemons of batch(10, getPokemon())) {
 
 ### decode
 ```ts
-function buffer<T>(size: number, iterable: AsyncIterable<T>): AsyncIterableIterator<T>
-function buffer<T>(size: number, iterable: Iterable<T>): IterableIterator<T>
+function decode<T>(size: number, iterable: AsyncIterable<T>): AsyncIterableIterator<T>
+function decode<T>(size: number, iterable: Iterable<T>): IterableIterator<T>
 ```
 Buffer keeps a number of objects in reserve available for immediate reading. This is helpful with async iterators as it will prefetch results so you don't have to wait for them to load. For sync iterables it will precompute up to `size` values and keep them in reserve. The internal buffer will start to be filled once `.next()` is called for the first time and will continue to fill until the source `iterable` is exhausted or the buffer is full. Errors from the source `iterable` will be raised after all buffered values are yielded.
 
