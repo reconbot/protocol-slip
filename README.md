@@ -6,6 +6,13 @@
 
 An iterator based [RFC 1055](https://tools.ietf.org/html/rfc1055) compliant `SLIP` (Serial Line Internet Protocol) encoder/decoder.
 
+
+- [Example](#example)
+- [About](#about)
+- [Install](#install)
+- [API](#api)
+- [Contributors wanted!](#contributors-wanted)
+
 ## Example
 ```js
 import { encode, decode } from 'protocol-slip'
@@ -20,6 +27,8 @@ for await (const message of decode(serial.readItr())) {
   console.log(message) // a buffer with your message in it
 }
 ```
+
+## About
 
 Both `encode` and `decode` return iterators (or async iterators depending on the data source) that will encode messages into packets, or decode binary data (full or partial packets) into messages. The [spec](https://tools.ietf.org/html/rfc1055), [earlier references](https://tools.ietf.org/html/rfc914) and the [wikipedia page](https://en.wikipedia.org/wiki/Serial_Line_Internet_Protocol) are light on details for edge cases, so I've referenced a few other implementations as well.
 
