@@ -3,7 +3,7 @@ import { deepEqual } from 'assert'
 import { END, ESC, END_ESC_SEQ, ESC_ESC, ESC_ESC_SEQ } from './constants'
 import { collect } from 'streaming-iterables'
 const HI = Buffer.from('hi')
-const BYE = Buffer.from('bye!')
+const BYE = Buffer.from('bye')
 const COMPUTER = Buffer.from('computer')
 
 describe('decode', () => {
@@ -35,8 +35,8 @@ describe('decode', () => {
 
   it('ignores empty packets', () => {
     const packet = Buffer.concat([HI, END, END, END, BYE, END, END])
-    const messages = collect(decode([packet]))
-    deepEqual(messages, [HI, BYE])
+    const messages = collect(decode([packet, HI, END, END, END, BYE, END, END]))
+    deepEqual(messages, [HI, BYE, HI, BYE])
   })
 
   it('ignores unknown escapes but keeps the data part', () => {

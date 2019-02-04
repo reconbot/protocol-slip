@@ -3,4 +3,4 @@ if ((Symbol as any).asyncIterator === undefined) {
 }
 
 export { encode, encodeMessage } from './encode'
-export { decode, decodePacket } from './decode'
+export { decode } from './decode'

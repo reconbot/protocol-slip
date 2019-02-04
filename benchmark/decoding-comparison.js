@@ -1,21 +1,23 @@
 // tslint:disable:no-console
-import { Suite } from 'benchmark'
-import slip from 'slip'
-import nodeSlip from 'node-slip'
-import { decode, encode } from '../lib'
-import { randomBytes } from 'crypto'
-import { equal } from 'assert'
+const { Suite } = require('benchmark')
+const { batch } = require('streaming-iterables')
+const slip = require('slip')
+const nodeSlip = require('node-slip')
+const { randomBytes } = require('crypto')
+const { equal } = require('assert')
+const { decode, encode } = require('../dist')
 
-const MESSAGES: Buffer[] = []
-for (let size = 1; size < 1000; size++) {
+const MESSAGES = []
+for (let size = 1; size <= 1024; size++) {
   MESSAGES.push(randomBytes(size))
 }
 
 const packetPerMessage = Array.from(encode(MESSAGES))
 const onePacket = [Buffer.concat(packetPerMessage)]
-const manyPackets = [...onePacket].map(byte => Buffer.from([byte]))
+const packetPerByte = [...onePacket[0]].map(byte => Buffer.from([byte]))
+const packetPer500Bytes = [...batch(500, onePacket[0])].map(bytes => Buffer.from(bytes))
 
-function testDecode(description: string, packets: Buffer[]) {
+function testDecode(description, packets) {
   const suite = new Suite()
   suite.add('protocol-slip', () => {
     const messages = Array.from(decode(packets))
@@ -23,7 +25,7 @@ function testDecode(description: string, packets: Buffer[]) {
   })
 
   suite.add('slip', () => {
-    const messages: any[] = []
+    const messages = []
     const decoder = new slip.Decoder({
       onMessage(message) {
         messages.push(message)
@@ -34,12 +36,12 @@ function testDecode(description: string, packets: Buffer[]) {
   })
 
   suite.add('node-slip', () => {
-    const messages: any[] = []
+    const messages = []
     const parser = new nodeSlip.parser({
       data(message) {
         messages.push(message)
       },
-    })
+    }, false)
     packets.forEach(packet => parser.write(packet))
     equal(messages.length, MESSAGES.length)
   })
@@ -48,25 +50,21 @@ function testDecode(description: string, packets: Buffer[]) {
     console.log(`  ${event.target.toString()}`)
   })
 
-  suite.on('complete', function() {
+  suite.on('complete', function () {
     console.log('Fastest is ' + this.filter('fastest').map('name') + '\n')
   })
 
   const promise = new Promise(resolve => {
     suite.on('complete', resolve)
   })
-  console.log(`Testing ${description}`)
+  console.log(`Benchmarking decode comparison ${description}`)
   suite.run()
   return promise
 }
 
-async function run() {
+module.exports.run = async function run() {
   await testDecode('onePacket', onePacket)
   await testDecode('packet per message', packetPerMessage)
-  await testDecode('manyPackets', manyPackets)
+  await testDecode('packetPerByte', packetPerByte)
+  await testDecode('500 byte packets', packetPer500Bytes)
 }
-
-run().catch(err => {
-  console.error(err)
-  process.exit(1)
-})

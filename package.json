@@ -9,6 +9,7 @@
   "runkitExampleFilename": "example.js",
   "scripts": {
     "test": "npm run unit-test && npm run lint",
+    "benchmark": "npm run build && node benchmark",
     "unit-test": "mocha --opts lib/mocha.opts",
     "lint": "tsc && tslint lib/*.ts",
     "format": "tslint lib/*.ts --fix",

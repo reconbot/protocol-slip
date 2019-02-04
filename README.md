@@ -70,7 +70,6 @@ This package targets ES2017 and requires node 8 or higher. It will polyfill `Sym
 ## API
 
 - [`decode()`](#decode)
-- [`decodePacket()`](#decodepacket)
 - [`encode()`](#encode)
 - [`encodeMessage()`](#encodemessage)
 
@@ -88,13 +87,6 @@ const PACKETS = [Buffer.from('54686973206973206D7920', 'HEX'), Buffer.from('6D65
 const messages = Array.from(decode(PACKETS))
 console.log(messages[0].toString()) // 'This is my message'
 ```
-
-### decodePacket
-```ts
-function decodePacket(packet: BufferList): Buffer
-```
-
-Take a [`BufferList`](https://www.npmjs.com/package/bl) of a complete packet and return a `Buffer` of a message. A `BufferList` is used as it allows appending buffers received from a stream or other source with very little overhead. This function is used internally and could be helpful if you do not have an iterable or async iterable interface to read data from.
 
 ### encode
 ```ts
