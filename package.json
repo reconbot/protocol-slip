@@ -22,7 +22,9 @@
     "async iterators",
     "stream",
     "protocol",
-    "parser"
+    "parser",
+    "rfc1055",
+    "rfc 1055"
   ],
   "author": "reconbot",
   "license": "MIT",
@@ -36,7 +38,9 @@
     "benchmark": "^2.1.4",
     "bluestream": "^10.3.3",
     "mocha": "^5.2.0",
+    "node-slip": "0.0.2",
     "prettier": "^1.15.2",
+    "slip": "^1.0.2",
     "streaming-iterables": "^3.4.0",
     "ts-node": "^7.0.1",
     "tslint": "^5.11.0",
