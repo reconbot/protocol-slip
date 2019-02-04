@@ -15,9 +15,9 @@ export const encodeMessage = (data: Buffer) => {
     // find the next thing to escape
     if (nextSlice === endPosition) {
       endPosition = remainingPacket.indexOf(END)
-      escPosition = escPosition - (part.length + 1)
+      escPosition = escPosition === -1 ? -1 : escPosition - (part.length + 1)
     } else {
-      endPosition = endPosition - (part.length + 1)
+      endPosition = endPosition === -1 ? -1 : endPosition - (part.length + 1)
       escPosition = remainingPacket.indexOf(ESC)
     }
   }

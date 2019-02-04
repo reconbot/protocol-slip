@@ -1,6 +1,7 @@
+import { randomBytes } from 'crypto'
+import { deepEqual } from 'assert'
 import { collect } from 'streaming-iterables'
 import { encode, decode } from './'
-import { deepEqual } from 'assert'
 import { END, ESC, ESC_END } from './constants'
 
 const MESSAGE = Buffer.concat([
@@ -75,5 +76,23 @@ describe('integration', () => {
   it('decodes and encodes', () => {
     const packets = Buffer.concat(collect(encode(decode([PACKETS]))))
     deepEqual(packets, PACKETS)
+  })
+  it('every byte test', () => {
+    const MESSAGES: Buffer[] = []
+    for (let byte = 0; byte < 2 ** 8; byte++) {
+      MESSAGES.push(Buffer.from([byte, byte]))
+    }
+
+    const recodedMessages = collect(decode(encode(MESSAGES)))
+    deepEqual(recodedMessages, MESSAGES)
+  })
+  it('random byte test', () => {
+    const MESSAGES: Buffer[] = []
+    for (let count = 0; count < 1024; count++) {
+      MESSAGES.push(randomBytes((Math.random() + 1) * 1024))
+    }
+
+    const recodedMessages = collect(decode(encode(MESSAGES)))
+    deepEqual(recodedMessages, MESSAGES)
   })
 })
