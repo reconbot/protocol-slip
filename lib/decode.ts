@@ -1,71 +1,93 @@
 import BufferList from 'bl'
 import { END, ESC_END, ESC_ESC, ESC } from './constants'
 
-export const decodePacket = (packet: BufferList): Buffer => {
-  const message = new BufferList()
-  let remainingPacket = packet
-  let escPosition = packet.indexOf(ESC)
-  while (escPosition > -1) {
-    if (escPosition > 0) {
-      const part = remainingPacket.shallowSlice(0, escPosition)
-      message.append(part)
+function* packetDecoder() {
+  let buffer = new BufferList()
+  let cursor = 0
+  let prevEscape = false
+  let packets: Buffer[] = []
+  while (true) {
+    while (cursor < buffer.length) {
+      const byte = buffer.get(cursor)
+      switch (byte) {
+        case ESC[0]:
+          prevEscape = true
+          break
+        case END[0]:
+          if (cursor > 0) {
+            const packet = buffer.slice(0, cursor)
+            if (prevEscape) {
+              if (packet.length > 1) {
+                packets.push(packet.slice(0, -1))
+              }
+            } else {
+              packets.push(packet)
+            }
+          }
+          buffer = buffer.shallowSlice(cursor + 1)
+          cursor = -1 // start from beginning again
+          prevEscape = false
+          break
+        default:
+          if (!prevEscape) {
+            break
+          }
+          prevEscape = false
+          let newValue = Buffer.from([byte])
+          if (byte === ESC_END[0]) {
+            newValue = END
+          } else if (byte === ESC_ESC[0]) {
+            newValue = ESC
+          }
+          // remove the escape and keep the value
+          buffer = new BufferList([
+            buffer.shallowSlice(0, cursor - 1),
+            newValue,
+            buffer.shallowSlice(cursor + 1),
+          ] as Buffer[])
+          // fix the cursor
+          cursor--
+      }
+      cursor++
     }
-    const nextByte = remainingPacket.get(escPosition + 1)
-    if (nextByte === ESC_END[0]) {
-      message.append(END)
-    } else if (nextByte === ESC_ESC[0]) {
-      message.append(ESC)
+
+    const input = yield packets.length > 0 ? packets : null
+    packets = []
+    if (input) {
+      buffer.append(input)
     } else {
-      message.append(remainingPacket.slice(escPosition + 1, escPosition + 2))
+      return buffer.length > 0 ? [buffer.slice()] : null
     }
-    remainingPacket = remainingPacket.shallowSlice(escPosition + 2)
-    escPosition = remainingPacket.indexOf(ESC)
   }
-  message.append(remainingPacket)
-  return message.slice()
 }
 
 function* _syncDecode(iterable: Iterable<Buffer>) {
-  let buffer = new BufferList()
+  const decoder = packetDecoder()
+  decoder.next() // start it up
   for (const data of iterable) {
-    // search new data for the END byte
-    const dataEndPosition = data.indexOf(END)
-    let endPosition = dataEndPosition === -1 ? -1 : buffer.length + dataEndPosition
-    buffer.append(data)
-    // emit any packets we have
-    while (endPosition > -1) {
-      if (endPosition > 0) {
-        const packetData = buffer.shallowSlice(0, endPosition)
-        yield decodePacket(packetData)
-      }
-      buffer = buffer.shallowSlice(endPosition + 1)
-      endPosition = buffer.indexOf(END)
+    const packets = decoder.next(data).value
+    if (packets) {
+      yield* packets
     }
   }
-  if (buffer.length > 0) {
-    yield decodePacket(buffer)
+  const lastPackets = decoder.next(null).value
+  if (lastPackets) {
+    yield* lastPackets
   }
 }
 
 async function* _asyncDecode(iterable: AsyncIterable<Buffer>) {
-  let buffer = new BufferList()
+  const decoder = packetDecoder()
+  decoder.next() // start it up
   for await (const data of iterable) {
-    // search new data for the END byte
-    const dataEndPosition = data.indexOf(END)
-    let endPosition = dataEndPosition === -1 ? -1 : buffer.length + dataEndPosition
-    buffer.append(data)
-    // emit any packets we have
-    while (endPosition > -1) {
-      if (endPosition > 0) {
-        const packet = buffer.shallowSlice(0, endPosition)
-        yield decodePacket(packet)
-      }
-      buffer = buffer.shallowSlice(endPosition + 1)
-      endPosition = buffer.indexOf(END)
+    const packets = decoder.next(data).value
+    if (packets) {
+      yield* packets
     }
   }
-  if (buffer.length > 0) {
-    yield decodePacket(buffer)
+  const lastPackets = decoder.next(null).value
+  if (lastPackets) {
+    yield* lastPackets
   }
 }
 
