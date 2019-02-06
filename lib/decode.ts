@@ -1,62 +1,61 @@
-import BufferList from 'bl'
 import { END, ESC_END, ESC_ESC, ESC } from './constants'
 
-function* packetDecoder() {
-  let buffer = new BufferList()
-  let cursor = 0
+function* packetDecoder(bufferSize = 1024) {
+  let buffer = Buffer.allocUnsafe(bufferSize)
+  let input: Buffer | null = null
+  let writeCursor = 0
   let prevEscape = false
   let packets: Buffer[] = []
+
+  const writeByte = (byte: number) => {
+    if (writeCursor >= buffer.length) {
+      buffer = Buffer.concat([buffer, Buffer.allocUnsafe(bufferSize)])
+    }
+    buffer[writeCursor] = byte
+    writeCursor++
+  }
+
+  const queuePacket = () => {
+    if (writeCursor === 0) {
+      return
+    }
+    packets.push(buffer.slice(0, writeCursor))
+    buffer = buffer.slice(writeCursor)
+    writeCursor = 0
+  }
+
   while (true) {
-    while (cursor < buffer.length) {
-      const byte = buffer.get(cursor)
+    input = yield packets
+    let inputCursor = 0
+    packets = []
+    if (!input) {
+      return writeCursor > 0 ? [buffer.slice(0, writeCursor)] : []
+    }
+    while (inputCursor < input.length) {
+      const byte = input[inputCursor]
       switch (byte) {
         case ESC[0]:
           prevEscape = true
           break
         case END[0]:
-          if (cursor > 0) {
-            const packet = buffer.slice(0, cursor)
-            if (prevEscape) {
-              if (packet.length > 1) {
-                packets.push(packet.slice(0, -1))
-              }
-            } else {
-              packets.push(packet)
-            }
-          }
-          buffer = buffer.shallowSlice(cursor + 1)
-          cursor = -1 // start from beginning again
           prevEscape = false
+          queuePacket()
           break
         default:
           if (!prevEscape) {
-            break
+            writeByte(byte)
+          } else {
+            prevEscape = false
+            let newValue = byte
+            if (byte === ESC_END[0]) {
+              newValue = END[0]
+            } else if (byte === ESC_ESC[0]) {
+              newValue = ESC[0]
+            }
+            writeByte(newValue)
           }
-          prevEscape = false
-          let newValue = Buffer.from([byte])
-          if (byte === ESC_END[0]) {
-            newValue = END
-          } else if (byte === ESC_ESC[0]) {
-            newValue = ESC
-          }
-          // remove the escape and keep the value
-          buffer = new BufferList([
-            buffer.shallowSlice(0, cursor - 1),
-            newValue,
-            buffer.shallowSlice(cursor + 1),
-          ] as Buffer[])
-          // fix the cursor
-          cursor--
       }
-      cursor++
-    }
-
-    const input = yield packets.length > 0 ? packets : null
-    packets = []
-    if (input) {
-      buffer.append(input)
-    } else {
-      return buffer.length > 0 ? [buffer.slice()] : null
+      inputCursor++
     }
   }
 }
@@ -81,14 +80,10 @@ async function* _asyncDecode(iterable: AsyncIterable<Buffer>) {
   decoder.next() // start it up
   for await (const data of iterable) {
     const packets = decoder.next(data).value
-    if (packets) {
-      yield* packets
-    }
+    yield* packets
   }
   const lastPackets = decoder.next(null).value
-  if (lastPackets) {
-    yield* lastPackets
-  }
+  yield* lastPackets
 }
 
 export function decode(iterable: AsyncIterable<Buffer>): AsyncIterableIterator<Buffer>

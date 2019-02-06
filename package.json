@@ -29,9 +29,7 @@
   ],
   "author": "reconbot",
   "license": "MIT",
-  "dependencies": {
-    "bl": "^2.2.0"
-  },
+  "dependencies": {},
   "devDependencies": {
     "@types/bl": "^2.1.0",
     "@types/mocha": "^5.2.5",
