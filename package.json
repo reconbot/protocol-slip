@@ -37,7 +37,7 @@
     "@types/node": "^10.12.4",
     "benchmark": "^2.1.4",
     "bluestream": "^10.3.3",
-    "mocha": "^5.2.0",
+    "mocha": "^10.2.0",
     "node-slip": "0.0.2",
     "prettier": "^1.15.2",
     "slip": "^1.0.2",
